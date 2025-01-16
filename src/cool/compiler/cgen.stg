@@ -1,0 +1,491 @@
+sequence(e) ::= "<e; separator=\"\n\">"
+sequenceSpaced(e) ::= "<e; separator=\"\n\n\">"
+
+program(strConsts, intConsts, classNameTab, classObjTab, classProtObj, classDispTab, classInit, textMain) ::= <<
+    .data
+    .align  2
+    .globl  class_nameTab
+    .globl  Int_protObj
+    .globl  String_protObj
+    .globl  bool_const0
+    .globl  bool_const1
+    .globl  Main_protObj
+    .globl  _int_tag
+    .globl  _string_tag
+    .globl  _bool_tag
+_int_tag:
+    .word   2
+_string_tag:
+    .word   3
+_bool_tag:
+    .word   4
+<strConsts>
+<intConsts>
+bool_const0:
+    .word   4
+    .word   4
+    .word   Bool_dispTab
+    .word   0
+bool_const1:
+    .word   4
+    .word   4
+    .word   Bool_dispTab
+    .word   1
+
+class_nameTab:
+<classNameTab>
+
+class_objTab:
+    .word   Object_protObj
+    .word   Object_init
+    .word   IO_protObj
+    .word   IO_init
+    .word   Int_protObj
+    .word   Int_init
+    .word   String_protObj
+    .word   String_init
+    .word   Bool_protObj
+    .word   Bool_init
+<classObjTab>
+
+Object_protObj:
+    .word   0
+    .word   3
+    .word   Object_dispTab
+IO_protObj:
+    .word   1
+    .word   3
+    .word   IO_dispTab
+Int_protObj:
+    .word   2
+    .word   4
+    .word   Int_dispTab
+    .word   0
+String_protObj:
+    .word   3
+    .word   5
+    .word   String_dispTab
+    .word   int_const0
+    .asciiz ""
+    .align  2
+Bool_protObj:
+    .word   4
+    .word   4
+    .word   Bool_dispTab
+    .word   0
+<classProtObj>
+
+Object_dispTab:
+    .word   Object.abort
+    .word   Object.type_name
+    .word   Object.copy
+IO_dispTab:
+    .word   Object.abort
+    .word   Object.type_name
+    .word   Object.copy
+    .word   IO.out_string
+    .word   IO.out_int
+    .word   IO.in_string
+    .word   IO.in_int
+Int_dispTab:
+    .word   Object.abort
+    .word   Object.type_name
+    .word   Object.copy
+String_dispTab:
+    .word   Object.abort
+    .word   Object.type_name
+    .word   Object.copy
+    .word   String.length
+    .word   String.concat
+    .word   String.substr
+Bool_dispTab:
+    .word   Object.abort
+    .word   Object.type_name
+    .word   Object.copy
+<classDispTab>
+
+    .globl  heap_start
+heap_start:
+    .word 0
+    .text
+    .globl  Int_init
+    .globl  String_init
+    .globl  Bool_init
+    .globl  Main_init
+    .globl  Main.main
+
+Object_init:
+    addiu   $sp $sp -12
+    sw      $fp 12($sp)
+    sw      $s0 8($sp)
+    sw      $ra 4($sp)
+    addiu   $fp $sp 4
+    move    $s0 $a0
+    move    $a0 $s0
+    lw      $fp 12($sp)
+    lw      $s0 8($sp)
+    lw      $ra 4($sp)
+    addiu   $sp $sp 12
+    jr      $ra
+IO_init:
+    addiu   $sp $sp -12
+    sw      $fp 12($sp)
+    sw      $s0 8($sp)
+    sw      $ra 4($sp)
+    addiu   $fp $sp 4
+    move    $s0 $a0
+    jal     Object_init
+    move    $a0 $s0
+    lw      $fp 12($sp)
+    lw      $s0 8($sp)
+    lw      $ra 4($sp)
+    addiu   $sp $sp 12
+    jr      $ra
+Int_init:
+    addiu   $sp $sp -12
+    sw      $fp 12($sp)
+    sw      $s0 8($sp)
+    sw      $ra 4($sp)
+    addiu   $fp $sp 4
+    move    $s0 $a0
+    jal     Object_init
+    move    $a0 $s0
+    lw      $fp 12($sp)
+    lw      $s0 8($sp)
+    lw      $ra 4($sp)
+    addiu   $sp $sp 12
+    jr      $ra
+String_init:
+    addiu   $sp $sp -12
+    sw      $fp 12($sp)
+    sw      $s0 8($sp)
+    sw      $ra 4($sp)
+    addiu   $fp $sp 4
+    move    $s0 $a0
+    jal     Object_init
+    move    $a0 $s0
+    lw      $fp 12($sp)
+    lw      $s0 8($sp)
+    lw      $ra 4($sp)
+    addiu   $sp $sp 12
+    jr      $ra
+Bool_init:
+    addiu   $sp $sp -12
+    sw      $fp 12($sp)
+    sw      $s0 8($sp)
+    sw      $ra 4($sp)
+    addiu   $fp $sp 4
+    move    $s0 $a0
+    jal     Object_init
+    move    $a0 $s0
+    lw      $fp 12($sp)
+    lw      $s0 8($sp)
+    lw      $ra 4($sp)
+    addiu   $sp $sp 12
+    jr      $ra
+<classInit>
+
+<textMain>
+>>
+
+dispatch(params, storeObject, label, methodOffset, fileNameIdx, lineNumber, dispTableRef) ::= <<
+<params>
+<storeObject>
+    bnez    $a0 <label>                 # Check for 'void'
+    la      $a0 str_const<fileNameIdx>  # Store the file name in $a0
+    li      $t1 <lineNumber>            # Store the line number
+    jal     _dispatch_abort             # Abort
+<label>:
+<dispTableRef>          # Dispatch table
+    lw      $t1 <methodOffset>($t1)     # Method offset
+    jalr    $t1
+>>
+
+pushParam(e) ::= <<
+<e>
+<pusha0()>
+>>
+
+pusha0() ::= <<
+    sw      $a0 0($sp)
+    addiu   $sp $sp -4
+>>
+
+methodDef(className, methodName, e, paramSize, localsSize) ::= <<
+<className>.<methodName>:
+    addiu   $sp $sp -12
+    sw      $fp 12($sp)
+    sw      $s0 8($sp)
+    sw      $ra 4($sp)
+    addiu   $fp $sp 4
+    addiu   $sp $sp -<localsSize>
+    move    $s0 $a0
+<e>
+    addiu   $sp $sp <localsSize>
+    lw      $fp 12($sp)
+    lw      $s0 8($sp)
+    lw      $ra 4($sp)
+    addiu   $sp $sp 12
+    addiu   $sp $sp <paramSize>
+    jr      $ra
+>>
+
+let(letInits, e) ::= <<
+<letInits>
+<e>
+>>
+
+localDef(e, offset) ::= <<
+<e>
+    sw      $a0 <offset>($fp)       # push the result onto the stack
+>>
+
+nameTab(strIdx) ::= <<
+    .word   str_const<strIdx>
+>>
+
+objTab(className) ::= <<
+    .word   <className>_protObj
+    .word   <className>_init
+>>
+
+intConst(n) ::= <<
+int_const<n>:
+    .word   2
+    .word   4
+    .word   Int_dispTab
+    .word   <n>
+>>
+
+strConst(idx, size, intIdx, str) ::= <<
+str_const<idx>:
+    .word   3
+    .word   <size>
+    .word   String_dispTab
+    .word   int_const<intIdx>
+    .asciiz "<str>"
+    .align  2
+>>
+
+dispTab(className, methods) ::= <<
+<className>_dispTab:
+<methods>
+>>
+
+dispTabEntry(className, methodName) ::= <<
+    .word   <className>.<methodName>
+>>
+
+protoAttribute(label) ::= <<
+    .word   <label>
+>>
+
+protObj(className, tag, size, attributes) ::= <<
+<className>_protObj:
+    .word   <tag>
+    .word   <size>
+    .word   <className>_dispTab
+<attributes>
+>>
+
+stringData(str) ::= <<
+    .asciiz "<str>"
+    .align  2
+>>
+
+classInit(className, parentName, attributeInits) ::= <<
+<className>_init:
+    addiu   $sp $sp -12
+    sw      $fp 12($sp)
+    sw      $s0 8($sp)
+    sw      $ra 4($sp)
+    addiu   $fp $sp 4
+    move    $s0 $a0
+    jal     <parentName>_init
+<attributeInits>
+    move    $a0 $s0
+    lw      $fp 12($sp)
+    lw      $s0 8($sp)
+    lw      $ra 4($sp)
+    addiu   $sp $sp 12
+    jr      $ra
+>>
+
+newClass(className) ::= <<
+    la      $a0 <className>_protObj
+    jal     Object.copy
+    jal     <className>_init
+>>
+
+newSelfType() ::= <<
+    la      $t1 class_objTab
+    lw      $t2 0($s0)          # class tag
+    sll     $t2 $t2 3           # *8
+    addu    $t1 $t1 $t2         # class_objTab + 8 * tag
+    sw      $t1 0($sp)
+    addiu   $sp $sp -4
+    lw      $a0 0($t1)          # _protObj
+    jal     Object.copy
+    lw      $t1 4($sp)
+    addiu   $sp $sp 4
+    lw      $t1 4($t1)          # _init
+    jalr    $t1
+>>
+
+attributeInit(e, offset) ::= <<
+<e>
+    sw      $a0 <offset>($s0)
+>>
+
+attributeGet(offset) ::= <<
+    lw      $a0 <offset>($s0)
+>>
+
+attributeSet(offset) ::= <<
+    sw      $a0 <offset>($s0)
+>>
+
+paramGet(offset) ::= <<
+    lw      $a0 <offset>($fp)
+>>
+
+paramSet(offset) ::= <<
+    sw      $a0 <offset>($fp)
+>>
+
+localGet(offset) ::= <<
+    lw      $a0 <offset>($fp)
+>>
+
+localSet(offset) ::= <<
+    sw      $a0 <offset>($fp)
+>>
+
+selfSet() ::= <<
+    move    $s0 $a0
+>>
+
+literal(type, value) ::= <<
+    la      $a0 <type>_const<value>
+>>
+
+assignment(e, varSet) ::= <<
+<e>
+<varSet>
+>>
+
+if_(cond, thenBranch, elseBranch, elseLabel, endIfLabel) ::= <<
+<cond>
+    lw      $t1 12($a0)
+    beqz    $t1 <elseLabel>
+<thenBranch>
+    b       <endIfLabel>
+<elseLabel>:
+<elseBranch>
+<endIfLabel>:
+>>
+
+isvoid(e, isvoidLabel, endIsvoidLabel) ::= <<
+<e>
+    beqz    $a0 <isvoidLabel>
+    la      $a0 bool_const0
+    b       <endIsvoidLabel>
+<isvoidLabel>:
+    la      $a0 bool_const1
+<endIsvoidLabel>:
+>>
+
+not(e, notLabel) ::= <<
+<e>
+    lw      $t1 12($a0)
+    la      $a0 bool_const1
+    beqz    $t1 <notLabel>
+    la      $a0 bool_const0
+<notLabel>:
+>>
+
+neg(e) ::= <<
+<e>
+    jal     Object.copy
+    lw      $t1 12($a0)
+    neg     $t1 $t1
+    sw      $t1 12($a0)
+>>
+
+arithmetic(left, right, op) ::= <<
+<left>
+    sw      $a0 0($sp)
+    addiu   $sp $sp -4
+<right>
+    jal     Object.copy
+    lw      $t1 4($sp)
+    addiu   $sp $sp 4
+    lw      $t1 12($t1)
+    lw      $t2 12($a0)
+    <op>     $t1 $t1 $t2
+    sw      $t1 12($a0)
+>>
+
+equal(left, right, equalLabel) ::= <<
+<left>
+    sw      $a0 0($sp)
+    addiu   $sp $sp -4
+<right>
+    lw      $t1 4($sp)
+    addiu   $sp $sp 4
+    move    $t2 $a0
+    la      $a0 bool_const1
+    beq     $t1 $t2 <equalLabel>
+    la      $a1 bool_const0
+    jal     equality_test
+<equalLabel>:
+>>
+
+cmp(left, right, op, compareLabel) ::= <<
+<left>
+    sw      $a0 0($sp)
+    addiu   $sp $sp -4
+<right>
+    lw      $t1 4($sp)
+    addiu   $sp $sp 4
+    lw      $t1 12($t1)
+    lw      $t2 12($a0)
+    la      $a0 bool_const1
+    <op>    $t1 $t2 <compareLabel>
+    la      $a0 bool_const0
+<compareLabel>:
+>>
+
+while(cond, e, loopStartLabel, whileEndLabel) ::= <<
+<loopStartLabel>:
+<cond>
+    lw      $t1 12($a0)
+    beqz    $t1 <whileEndLabel>
+<e>
+    b       <loopStartLabel>
+<whileEndLabel>:
+    li      $a0 0
+>>
+
+case(e, caseVarOffset, branches, caseLabel, endCaseLabel, fileNameIdx, lineNumber) ::= <<
+<e>
+    bnez    $a0 <caseLabel>
+    la      $a0 str_const<fileNameIdx>
+    li      $t1 <lineNumber>
+    jal     _case_abort2
+<caseLabel>:
+    sw      $a0 <caseVarOffset>($fp)
+    lw      $t1 0($a0)
+<branches>
+    lw      $a0 <caseVarOffset>($fp)
+    jal     _case_abort
+<endCaseLabel>:
+>>
+
+caseBranch(tag, maxTag, e, caseBranchLabel, endCaseLabel) ::= <<
+    blt     $t1 <tag> <caseBranchLabel>
+    bgt     $t1 <maxTag> <caseBranchLabel>
+<e>
+    b       <endCaseLabel>
+<caseBranchLabel>:
+>>
